@@ -5,14 +5,15 @@
 単独で機能になっているがパッケージにするほどでもないもの
 基本的には Maya のホットキーやシェルフから直接呼ぶもの
 """
+import itertools
+import re
 
 import maya.cmds as cmds
 import maya.mel as mel
-import re
+import pymel.core as pm
 
 from .core import *
 from .command import *
-
 
 def message(s):
     cmds.inViewMessage(smg=s, pos="topCenter", bkc="0x00000000", fade=True)
@@ -477,3 +478,111 @@ def close_hole_all(obj=None):
         cmds.select(polyline)
         cmds.polyExtrudeEdge()
         mel.eval("polyMergeToCenter")
+
+
+# 二角形ホール処理スクリプト
+
+def get_digon_edge_pairs(obj):
+    """
+    obj に含まれるすべての二角形ホールを取得する
+    """
+
+    # ボーダーエッジ取得
+    border_edges = []
+
+    all_faces = pm.polyListComponentConversion(obj.faces, ff=True, te=True, bo=True)
+    if all_faces:
+        border_edges = [pm.PyNode(x) for x in pm.filterExpand(all_faces, sm=32, ex=True)]
+
+    # ボーダーエッジ同士で 2 頂点を共有するペアを探す
+    digon_edge_pairs = []
+
+    for edge in border_edges:
+        for connected_edge in [x for x in edge.connectedEdges() if x in border_edges]:
+            if len(set(edge.connectedVertices()) & set(connected_edge.connectedVertices())) == 2:
+                if not (connected_edge,edge) in digon_edge_pairs:
+                    digon_edge_pairs.append( (edge, connected_edge) )
+    
+    return digon_edge_pairs
+
+
+def remove_digon_holes(obj):
+    """
+    obj に含まれるすべての二角形ホールを削除する
+    """
+
+    # 二角形ホールの取得
+    digon_pairs = get_digon_edge_pairs(obj)
+
+    # 二角形ホールの削除
+    if digon_pairs:
+        all_edges = [edge for edges in digon_pairs for edge in edges]
+
+        # 辺にそれぞれ頂点を追加する
+        pm.select(clear=True)
+        pm.polySubdivideEdge(all_edges)
+        edges = pm.ls(selection=True, flatten=True)
+        vertices = [x for e in edges for x in e.connectedVertices()]
+        target_vertices= [x for x in vertices if len(x.connectedEdges()) == 2]
+        
+        # 追加した頂点をマージし､マージ後の頂点を削除する
+        pm.select(clear=True)
+        pm.polyMergeVertex(target_vertices)
+        merged_vertex = pm.ls(selection=True, flatten=True)
+        pm.delete(merged_vertex)
+
+    return len(digon_pairs)
+
+
+def select_digon_holes(objects=None):
+    """
+    指定オブジェクトのすべての二角形ホールの構成エッジを選択する
+    引数無しで選択オブエクトを対象とする
+    """
+
+    if not objects:
+        objects = pm.ls(selection=True)
+
+    # 二角形ホールの選択
+    pm.select(clear=True)
+
+    for obj in objects:
+        digon_pairs = get_digon_edge_pairs(obj)
+
+        if digon_pairs:
+            all_edges = [edge for edges in digon_pairs for edge in edges]
+            pm.select(all_edges, add=True)
+
+
+def remove_digon_holes_from_objects(objects=None, display_message=True):
+    """
+    指定オブジェクトのすべての二角形ホールを削除する
+    引数無しで選択オブエクトを対象とする
+    """
+
+    if not objects:
+        objects = pm.ls(selection=True)
+
+    count = 0
+
+    for obj in objects:
+        n = remove_digon_holes(obj)
+        count += n
+
+    if display_message:
+        msg = "remove %d holes." % count
+        print(msg)
+        message(msg)
+
+def merge_to_last():
+    """
+    最後に選択した頂点にマージ
+    """
+    # 最終選択頂点座標の取得
+    sel = pm.ls(orderedSelection=True, flatten=True)
+    point = sel[-1].getPosition()
+
+    # センターへマージしてから移動
+    mel.eval("polyMergeToCenter")
+    vtx = pm.ls(orderedSelection=True, flatten=True)[0]
+    vtx.setPosition(point)
