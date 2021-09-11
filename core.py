@@ -435,3 +435,13 @@ def get_active_camera():
     camera = cmds.modelPanel(active_panel, q=True, camera=True)
 
     return camera
+
+def is_supported_weight_format_option():
+    """
+    ウェイト関連機能の format オプションに対応しているかどうか
+    """
+    ver = int(cmds.about(version=True))
+    if ver > 2018:
+        return True
+    else:
+        return False
