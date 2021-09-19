@@ -4,7 +4,9 @@
 """
 単独で機能になっているがパッケージにするほどでもないもの
 基本的には Maya のホットキーやシェルフから直接呼ぶもの
+戻り値のないもの
 """
+
 import itertools
 import re
 
@@ -15,8 +17,10 @@ import pymel.core as pm
 from .core import *
 from .command import *
 
+
 def message(s):
     cmds.inViewMessage(smg=s, pos="topCenter", bkc="0x00000000", fade=True)
+
 
 def get_project_root():
     """
@@ -29,6 +33,7 @@ def get_project_root():
     newProject = re.sub(r'/scenes/.+$', '', currentScene, 1)
     return newProject
 
+
 def set_project_from_scene():
     """現在開いているシーンからプロジェクトを設定する"""
     currentScene = cmds.file(q=True, sn=True)
@@ -36,13 +41,18 @@ def set_project_from_scene():
     cmds.workspace(newProject, openWorkspace=True)
     cmds.inViewMessage(smg=newProject, pos="topCenter", bkc="0x00000000", fade=True)
 
+
 def disable_all_maintain_max_inf():
     """シーンに存在するすべてのスキンクラスターの maintanMaxInfluences を無効にする"""
     sc_list = cmds.ls(type="skinCluster")
     for sc in sc_list:
         cmds.setAttr(sc + ".maintainMaxInfluences", 0)
 
+
 def set_coord(axis, v):
+    """
+    選択頂点の指定した軸の座標値を設定する
+    """
     selection = cmds.ls(selection=True, flatten=True)
 
     for vtx in selection:
@@ -62,13 +72,17 @@ def set_coord(axis, v):
 def set_x_zero():
     """選択頂点の X ローカル座標を 0 に設定する"""
     set_coord('x', 0)
+
+
 def set_y_zero():
     """選択頂点の Y ローカル座標を 0 に設定する"""
     set_coord('y', 0)
 
+
 def set_z_zero():
     """選択頂点の Z ローカル座標を 0 に設定する"""
     set_coord('z', 0)
+
 
 def extract_transform():
     """選択オブジェクトの親に作成したトランスフォームノードに自身のトランスフォームを逃がして TRS を基準値にする"""
@@ -87,6 +101,7 @@ def extract_transform():
     """
 
     mel.eval(cmd)
+
 
 def create_set_with_name():
     """名前を指定して選択オブジェクトでセットを作成刷る"""
@@ -111,6 +126,7 @@ def create_set_with_name():
 
     mel.eval(cmd)
 
+
 def set_transform_constraint_edge():
     """トランスフォームコンストレイントを edge に設定"""
     cmd = """
@@ -129,6 +145,7 @@ def set_transform_constraint_surface():
     """
 
     mel.eval(cmd)
+
 
 def set_transform_constraint_none():
     """トランスフォームコンストレイントを解除"""
@@ -177,6 +194,7 @@ def straighten_uv_shell():
 def make_lattice():
     mel.eval("CreateLattice")
 
+
 def make_semisphere_bend():
     """
     ベンドでフォーマーを直交させて2つかけて平面を半球にするデフォーマー
@@ -185,28 +203,29 @@ def make_semisphere_bend():
 
     bend1, bendhandle1 = cmds.nonLinear(target, type="bend", lowBound=-1, highBound=1, curvature=90)
 
-    cmds.setAttr("%(bendhandle1)s.scaleX"%locals(), 23.6)
-    cmds.setAttr("%(bendhandle1)s.scaleY"%locals(), 23.6)
-    cmds.setAttr("%(bendhandle1)s.scaleZ"%locals(), 23.6)
+    cmds.setAttr("%(bendhandle1)s.scaleX" % locals(), 23.6)
+    cmds.setAttr("%(bendhandle1)s.scaleY" % locals(), 23.6)
+    cmds.setAttr("%(bendhandle1)s.scaleZ" % locals(), 23.6)
 
-    cmds.setAttr("%(bendhandle1)s.rotateY"%locals(), 90)
+    cmds.setAttr("%(bendhandle1)s.rotateY" % locals(), 90)
 
     bend2, bendhandle2 = cmds.nonLinear(target, type="bend", lowBound=-1, highBound=1, curvature=90)
 
-    cmds.setAttr("%(bendhandle2)s.scaleX"%locals(), 23.6)
-    cmds.setAttr("%(bendhandle2)s.scaleY"%locals(), 23.6)
-    cmds.setAttr("%(bendhandle2)s.scaleZ"%locals(), 23.6)
+    cmds.setAttr("%(bendhandle2)s.scaleX" % locals(), 23.6)
+    cmds.setAttr("%(bendhandle2)s.scaleY" % locals(), 23.6)
+    cmds.setAttr("%(bendhandle2)s.scaleZ" % locals(), 23.6)
 
-    cmds.setAttr("%(bendhandle2)s.rotateX"%locals(), -90)
-    cmds.setAttr("%(bendhandle2)s.rotateY"%locals(), 90)
+    cmds.setAttr("%(bendhandle2)s.rotateX" % locals(), -90)
+    cmds.setAttr("%(bendhandle2)s.rotateY" % locals(), 90)
+
 
 def toggle_bend():
 
     bend_nodes = [
-    "bend5",
-    "bend6",
-    "bend7",
-    "bend8",
+        "bend5",
+        "bend6",
+        "bend7",
+        "bend8",
     ]
 
     envelope = (cmds.getAttr("bend5.envelope") is 1)
@@ -217,6 +236,7 @@ def toggle_bend():
     else:
             for bend in bend_nodes:
                 cmds.setAttr("%(bend)s.envelope"%locals(), 1)
+
 
 def connect_file_to_active_material():
     # TODO: 選択マテリアルの取得とテクスチャ名のダイアログ
@@ -241,6 +261,7 @@ def rename_imageplane():
             new_name = re.sub(r'^(ip_)*', 'ip_', base_name)
             cmds.rename(obj, new_name)
 
+
 def freeze_instance():
     """
     インスタンスコピーとそうじゃないものをまとめて選択した状態で
@@ -254,6 +275,7 @@ def freeze_instance():
             mel.eval("convertInstanceToObject")
         except:
             pass
+
 
 def get_adjacent_edgeloop(edges, incomplete=True):
     """
@@ -269,6 +291,7 @@ def get_adjacent_edgeloop(edges, incomplete=True):
     # 複数あれば incomplete==True の場合のみなす角が一番小さいものを返す
     pass
 
+
 def get_adjacent_edgering(edges, incomplete=True):
     """
     指定したエッジの隣のエッジリングとなるエッジを返す
@@ -283,19 +306,20 @@ def get_adjacent_edgering(edges, incomplete=True):
     # 複数あれば incomplete==True の場合のみなす角が一番小さいものを返す
     pass
 
+
 def extend_edgeloop_selection_grow(incomplete=True):
     """
     エッジループを伸ばす方向に選択拡張する
     """
-
     mel.eval("PolySelectTraverse 5") #TODO: 仮なので置き換えて
+
 
 def extend_edgeloop_selection_shrink(incomplete=True):
     """
     エッジループを伸ばす方向に選択拡張する
     """
-
     mel.eval("PolySelectTraverse 6") #TODO: 仮なので置き換えて
+
 
 def extend_edgering_selection_grow(incomplete=True):
     """
@@ -303,11 +327,13 @@ def extend_edgering_selection_grow(incomplete=True):
     """
     pass
 
+
 def extend_edgering_selection_shrink(incomplete=True):
     """
     エッジリングを選択拡張する
     """
     pass
+
 
 class Line():
     def __init__(self, p1, p2):
@@ -318,6 +344,7 @@ class Line():
 def get_nearest_point_between_lines(p1, p2, p3, p4):
     # https://math.stackexchange.com/questions/1993953/closest-points-between-two-lines
     pass
+
 
 def debevel(edges):
     """
@@ -331,6 +358,7 @@ def debevel(edges):
     # 線分の延長線上の最近接点に頂点を移動する
     pass
 
+
 def face_to_camera():
     active_panel = cmds.getPanel(wf=True)
     camera = cmds.modelPanel(active_panel, q=True, camera=True)
@@ -339,11 +367,13 @@ def face_to_camera():
     for target in selections:
         mel.eval("matchTransform -rot " + target + " " + camera)
 
+
 def parent_to_camera():
     active_panel = cmds.getPanel(wf=True)
     camera = cmds.modelPanel(active_panel, q=True, camera=True)
     targets = cmds.ls(selection=True)
     cmds.parent(targets, camera)
+
 
 def shrinkwrap_for_set():
     """
@@ -414,7 +444,11 @@ def duplicate_and_rename():
     cmds.setAttr("foreArmGeoGrpL.translateX", 20)
     cmds.setAttr("foreArmGeoGrpR.translateX", -20)
 
+
 def delete_uvSet_noncurrent():
+    """
+    カレント以外の UV セットを削除する
+    """
     selections = cmds.ls(selection=True)
 
     for obj in selections:
@@ -425,6 +459,7 @@ def delete_uvSet_noncurrent():
 
 
 target_objects = []
+
 
 def snap_to_closest():
     selections = get_selection()
@@ -481,7 +516,6 @@ def close_hole_all(obj=None):
 
 
 # 二角形ホール処理スクリプト
-
 def get_digon_edge_pairs(obj):
     """
     obj に含まれるすべての二角形ホールを取得する
@@ -501,7 +535,7 @@ def get_digon_edge_pairs(obj):
         for connected_edge in [x for x in edge.connectedEdges() if x in border_edges]:
             if len(set(edge.connectedVertices()) & set(connected_edge.connectedVertices())) == 2:
                 if not (connected_edge,edge) in digon_edge_pairs:
-                    digon_edge_pairs.append( (edge, connected_edge) )
+                    digon_edge_pairs.append((edge, connected_edge))
     
     return digon_edge_pairs
 
@@ -524,7 +558,7 @@ def remove_digon_holes(obj):
         edges = pm.ls(selection=True, flatten=True)
         vertices = [x for e in edges for x in e.connectedVertices()]
         target_vertices= [x for x in vertices if len(x.connectedEdges()) == 2]
-        
+
         # 追加した頂点をマージし､マージ後の頂点を削除する
         pm.select(clear=True)
         pm.polyMergeVertex(target_vertices)
@@ -574,6 +608,7 @@ def remove_digon_holes_from_objects(objects=None, display_message=True):
         print(msg)
         message(msg)
 
+
 def merge_to_last():
     """
     最後に選択した頂点にマージ
@@ -586,3 +621,37 @@ def merge_to_last():
     mel.eval("polyMergeToCenter")
     vtx = pm.ls(orderedSelection=True, flatten=True)[0]
     vtx.setPosition(point)
+
+
+def merge_in_range(vertices, r, connected=True):
+    """
+    指定した頂点から指定した範囲内にある頂点をマージ
+    マージ後の頂点座標は引数で指定した頂点の中央
+    vertices:   マージの基準となる頂点リスト。最初に中央へマージされる
+    r:          vertices からマージ対象となる頂点までの最大距離
+    connected:  True:   選択頂点の隣接頂点のみをマージ対象とする
+                False:  選択オブジェクト全体の頂点を対象とする
+    """
+    # 指定頂点をセンターへマージ
+    base_position = sum([x.getPosition(space="world") for x in vertices]) / len(vertices)
+    pm.polyMergeVertex(vertices, d=100)
+    vtx = pm.selected(flatten=True)[0]
+    
+    # マージ判定対象
+    target = []
+
+    if connected:
+        target = vtx.connectedVertices() + vtx
+    else:
+        obj = pm.PyNode(get_object(vtx))
+        target = obj.vertices()
+
+    # マージ対象
+    vertices_to_merge = [vtx for vtx in target if (vtx.getPosition(space="world") - base_position).length() <= r]
+
+    pm.polyMergeVertex(vertices_to_merge, d=r)
+    vtx = pm.selected(flatten=True)[0]
+
+    # 基準頂点の位置へ移動
+    vtx.setPosition(base_position, space="world")
+
