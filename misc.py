@@ -1,7 +1,6 @@
 #! python
 # coding:utf-8
-
-"""
+""" 
 単独で機能になっているがパッケージにするほどでもないもの
 基本的には Maya のホットキーやシェルフから直接呼ぶもの
 戻り値のないもの
@@ -19,12 +18,12 @@ from .command import *
 
 
 def message(s):
+    """ 簡易 inVewMessage """
     cmds.inViewMessage(smg=s, pos="topCenter", bkc="0x00000000", fade=True)
 
 
 def get_project_root():
-    """
-    現在開いているシーンのルートディレクトリを取得する
+    """ 現在開いているシーンのルートディレクトリを取得する
     TODO: ディレクトリ構成が違う場合や開いてるシーンと現在のプロジェクトの指定が一致していない場合の処理 (プロンプトで選ばせれば良い)
     file コマンドで l オプション指定してないとたまに空文字列返す場合がある
         https://forums.cgsociety.org/t/cmds-file-scenename-returns-nothing/1565243/2
@@ -35,7 +34,7 @@ def get_project_root():
 
 
 def set_project_from_scene():
-    """現在開いているシーンからプロジェクトを設定する"""
+    """ 現在開いているシーンからプロジェクトを設定する """
     currentScene = cmds.file(q=True, sn=True)
     newProject = re.sub(r'/scenes/.+$', '', currentScene, 1)
     cmds.workspace(newProject, openWorkspace=True)
@@ -43,49 +42,52 @@ def set_project_from_scene():
 
 
 def disable_all_maintain_max_inf():
-    """シーンに存在するすべてのスキンクラスターの maintanMaxInfluences を無効にする"""
+    """ シーンに存在するすべてのスキンクラスターの maintanMaxInfluences を無効にする """
     sc_list = cmds.ls(type="skinCluster")
     for sc in sc_list:
         cmds.setAttr(sc + ".maintainMaxInfluences", 0)
 
 
 def set_coord(axis, v):
-    """
-    選択頂点の指定した軸の座標値を設定する
+    """ [cmds] 選択頂点の指定した軸の座標値を設定する
+    
+    Args:
+        axis (str): "x", "y", "z"
+        v (str): 頂点を表すコンポーネント文字列
     """
     selection = cmds.ls(selection=True, flatten=True)
 
     for vtx in selection:
-        x,y,z = cmds.xform(vtx, q=True, a=True, os=True, t=True)
+        x, y, z = cmds.xform(vtx, q=True, a=True, os=True, t=True)
 
-        t = (0,0,0)
+        t = (0, 0, 0)
         if axis == "x":
-            t = (v,y,z)
+            t = (v, y, z)
         if axis == "y":
-            t = (x,v,z)
+            t = (x, v, z)
         if axis == "z":
-            t = (x,y,v)
+            t = (x, y, v)
 
         cmds.xform(vtx, a=True, os=True, t=t)
 
 
 def set_x_zero():
-    """選択頂点の X ローカル座標を 0 に設定する"""
+    """ 選択頂点の X ローカル座標を 0 に設定する """
     set_coord('x', 0)
 
 
 def set_y_zero():
-    """選択頂点の Y ローカル座標を 0 に設定する"""
+    """ 選択頂点の Y ローカル座標を 0 に設定する """
     set_coord('y', 0)
 
 
 def set_z_zero():
-    """選択頂点の Z ローカル座標を 0 に設定する"""
+    """ 選択頂点の Z ローカル座標を 0 に設定する """
     set_coord('z', 0)
 
 
 def extract_transform():
-    """選択オブジェクトの親に作成したトランスフォームノードに自身のトランスフォームを逃がして TRS を基準値にする"""
+    """ 選択オブジェクトの親に作成したトランスフォームノードに自身のトランスフォームを逃がして TRS を基準値にする """
     cmd = """
     $selection = `ls -selection`;
     string $group = `group -empty`;
@@ -104,7 +106,7 @@ def extract_transform():
 
 
 def create_set_with_name():
-    """名前を指定して選択オブジェクトでセットを作成刷る"""
+    """ 名前を指定して選択オブジェクトでセットを作成刷る """
 
     cmd = """
     string $name;
@@ -128,7 +130,7 @@ def create_set_with_name():
 
 
 def set_transform_constraint_edge():
-    """トランスフォームコンストレイントを edge に設定"""
+    """ トランスフォームコンストレイントを edge に設定 """
     cmd = """
     xformConstraint -type "edge";
     inViewMessage -smg "constraint: edge" -pos topCenter -bkc 0x00000000 -fade;
@@ -138,7 +140,7 @@ def set_transform_constraint_edge():
 
 
 def set_transform_constraint_surface():
-    """トランスフォームコンストレイントをに surface 設定"""
+    """ トランスフォームコンストレイントをに surface 設定 """
     cmd = """
     xformConstraint -type "surface";
     inViewMessage -smg "constraint: surface" -pos topCenter -bkc 0x00000000 -fade;
@@ -148,7 +150,7 @@ def set_transform_constraint_surface():
 
 
 def set_transform_constraint_none():
-    """トランスフォームコンストレイントを解除"""
+    """ トランスフォームコンストレイントを解除 """
     cmd = """
     xformConstraint -type "none";
     inViewMessage -smg "constraint: none" -pos topCenter -bkc 0x00000000 -fade;
@@ -158,8 +160,8 @@ def set_transform_constraint_none():
 
 
 def straighten_uv_shell():
-    """
-    選択UVを直線化し、同一シェルの他のUVをoptimizeする
+    """ 選択UVを直線化し、同一シェルの他のUVをoptimizeする
+
     選択UVのU軸/V軸のそれぞれの分布を調べて分布が大きい方(シェルが長い方)に併せて縦横を決める
     """
     uvs = cmds.ls(selection=True)
@@ -196,8 +198,8 @@ def make_lattice():
 
 
 def make_semisphere_bend():
-    """
-    ベンドでフォーマーを直交させて2つかけて平面を半球にするデフォーマー
+    """ ベンドデフォーマーを直交させて2つかけて平面を半球にするデフォーマー｡
+    TODO: ハードコーディング修正して値返して
     """
     target = cmds.ls(selection=True)
 
@@ -220,6 +222,9 @@ def make_semisphere_bend():
 
 
 def toggle_bend():
+    """ ベンドの envelope 0/1 トグル    
+    TODO: ハードコーディング修正して値返して
+    """
 
     bend_nodes = [
         "bend5",
@@ -228,26 +233,27 @@ def toggle_bend():
         "bend8",
     ]
 
-    envelope = (cmds.getAttr("bend5.envelope") is 1)
+    envelope = (cmds.getAttr("bend5.envelope") == 1)
 
     if envelope:
-            for bend in bend_nodes:
-                cmds.setAttr("%(bend)s.envelope"%locals(), 0)
+        for bend in bend_nodes:
+            cmds.setAttr("%(bend)s.envelope" % locals(), 0)
     else:
-            for bend in bend_nodes:
-                cmds.setAttr("%(bend)s.envelope"%locals(), 1)
+        for bend in bend_nodes:
+            cmds.setAttr("%(bend)s.envelope" % locals(), 1)
 
 
 def connect_file_to_active_material():
-    # TODO: 選択マテリアルの取得とテクスチャ名のダイアログ
+    """
+    TODO: 選択マテリアルの取得とテクスチャ名のダイアログ
+    """
     material = ""
     file = ""
     cmds.connectAttr("%(material)s.color"%locals(), "%(file)s.outColor"%locals())
 
 
 def rename_imageplane():
-    """
-    選択したイメージプレーンのノード名をファイル名を元にリネーム
+    """ 選択したイメージプレーンのノード名をファイル名を元にリネーム
     """
     selections = cmds.ls(selection=True)
 
@@ -263,9 +269,10 @@ def rename_imageplane():
 
 
 def freeze_instance():
-    """
-    インスタンスコピーとそうじゃないものをまとめて選択した状態で
-    インスタンスだけフリーズする
+    """ 選択オブジェクトのうちインスタンスコピーだけオブジェクトに変換する
+
+    インスタンスコピーとそうじゃないものをまとめて選択した状態でインスタンスだけフリーズする｡
+    Maya 標準だと非インスタンスコピーオブジェクトが含まれると警告出て止まるため
     """
     selections = cmds.ls(selection=True)
     cmds.select(clear=True)
@@ -274,12 +281,13 @@ def freeze_instance():
             cmds.select(obj)
             mel.eval("convertInstanceToObject")
         except:
+            # 非インスタンスコピーの警告を無視する
             pass
 
 
 def get_adjacent_edgeloop(edges, incomplete=True):
-    """
-    指定したエッジの進行方向のエッジを返す
+    """ 指定したエッジの進行方向のエッジを返す
+
     ___ → _
     返値は隣のエッジを要素とするリスト(最大要素数2)
     incomplete: 候補エッジが複数合った場合の処理
@@ -293,8 +301,8 @@ def get_adjacent_edgeloop(edges, incomplete=True):
 
 
 def get_adjacent_edgering(edges, incomplete=True):
-    """
-    指定したエッジの隣のエッジリングとなるエッジを返す
+    """ 指定したエッジの隣のエッジリングとなるエッジを返す
+
     ||| → |
     返値は隣のエッジを要素とするリスト(最大要素数2)
     incomplete: 候補エッジが複数合った場合の処理
@@ -308,47 +316,61 @@ def get_adjacent_edgering(edges, incomplete=True):
 
 
 def extend_edgeloop_selection_grow(incomplete=True):
+    """ エッジループを伸ばす方向に選択拡張する
+    TODO: 実装
     """
-    エッジループを伸ばす方向に選択拡張する
-    """
-    mel.eval("PolySelectTraverse 5") #TODO: 仮なので置き換えて
+    mel.eval("PolySelectTraverse 5")  # TODO: 仮なので置き換えて
 
 
 def extend_edgeloop_selection_shrink(incomplete=True):
+    """ エッジループを伸ばす方向に選択拡張する
+    TODO: 実装
     """
-    エッジループを伸ばす方向に選択拡張する
-    """
-    mel.eval("PolySelectTraverse 6") #TODO: 仮なので置き換えて
+    mel.eval("PolySelectTraverse 6")  # TODO: 仮なので置き換えて
 
 
 def extend_edgering_selection_grow(incomplete=True):
-    """
-    エッジリングを選択拡張する
+    """ エッジリングを選択拡張する
+    TODO: 実装
     """
     pass
 
 
 def extend_edgering_selection_shrink(incomplete=True):
-    """
-    エッジリングを選択拡張する
+    """ エッジリングを選択拡張する
+    TODO: 実装
     """
     pass
 
 
 class Line():
+    """ 線分クラス
+    
+    """
+
     def __init__(self, p1, p2):
         self.p1 = p1
         self.p2 = p2
 
 
 def get_nearest_point_between_lines(p1, p2, p3, p4):
+    """[summary]
+
+    TODO:実装
+
+    Args:
+        p1 ([type]): [description]
+        p2 ([type]): [description]
+        p3 ([type]): [description]
+        p4 ([type]): [description]
+    """
     # https://math.stackexchange.com/questions/1993953/closest-points-between-two-lines
     pass
 
 
 def debevel(edges):
-    """
-    ベベル面の中央連続エッジを渡すとエッジを移動してベベル前のコーナーを復帰する
+    """ ベベル面の中央連続エッジを渡すとエッジを移動してベベル前のコーナーを復帰する
+    TODO:実装
     """
     # エッジから頂点に変換
     # 頂点の隣接エッジ(引数エッジ列から直行するエッジ)を取得
@@ -376,9 +398,10 @@ def parent_to_camera():
 
 
 def shrinkwrap_for_set():
-    """
+    """ オブジェクトの一部分にだけシュリンクラップを設定する
     頂点セットとターゲットメッシュ選択して実行すると
     セットメンバーの頂点のみウェイトが1.0になるようにシュリンクラップを作成する
+    TODO: セレクションじゃなくて引数で頂点リスト取って
     """
     base_set, target = cmds.ls(selection=True, flatten=True)
 
@@ -406,48 +429,8 @@ def shrinkwrap_for_set():
     cmds.select(shrinkwrap)
 
 
-def duplicate_and_rename():
-    """
-    現状ただのコピペ
-    UUID リネームのサンプル
-    汎用的な複製・リネームにしたい
-    """
-    import maya.cmds as cmds
-    import re
-
-    # 既存オブジェクトの削除と複製
-    if cmds.objExists("foreArmGeoGrpR"):
-        cmds.delete("foreArmGeoGrpR")
-    cmds.setAttr("foreArmGeoGrpL.translateX", 0)
-    dup_grp_name = cmds.duplicate("geoGrp", rr=True)
-    cmds.scale(-1, 1, 1, dup_grp_name, r=True)
-
-    # 複製オブジェクトの UUID リストを取得
-    obj_name_list = cmds.listRelatives(dup_grp_name, ad=True, f=True, type="transform")
-    obj_uuid_list = [cmds.ls(x, uuid=True)[0] for x in obj_name_list]
-
-    # UUID ごとにリネーム
-    for obj_uuid in obj_uuid_list:
-        old_name = cmds.ls(obj_uuid)[0]
-        new_name = re.sub(r"L$", "R", old_name)
-        new_name = re.sub(r"^.*\|", "", new_name)
-        cmds.rename(old_name, new_name)
-
-    # ペアレント
-    cmds.parent("foreArmGeoGrpR", "geoGrp")
-    cmds.delete(dup_grp_name)
-
-    # 複製時のトランスフォームをフリーズ
-    cmds.makeIdentity("foreArmGeoGrpR", apply=True, t=1, r=1, s=1, n=0, pn=1)
-
-    # 仕様通りの左右オフセット
-    cmds.setAttr("foreArmGeoGrpL.translateX", 20)
-    cmds.setAttr("foreArmGeoGrpR.translateX", -20)
-
-
 def delete_uvSet_noncurrent():
-    """
-    カレント以外の UV セットを削除する
+    """ カレント以外の UV セットを削除する
     """
     selections = cmds.ls(selection=True)
 
@@ -496,8 +479,7 @@ def snap_to_closest():
 
 
 def close_hole_all(obj=None):
-    """
-    指定したオブジェクトの穴をすべて塞ぐ
+    """ 指定したオブジェクトの穴をすべて塞ぐ
     """
     if not obj:
         obj = get_selection()
@@ -517,8 +499,7 @@ def close_hole_all(obj=None):
 
 # 二角形ホール処理スクリプト
 def get_digon_edge_pairs(obj):
-    """
-    obj に含まれるすべての二角形ホールを取得する
+    """ obj に含まれるすべての二角形ホールを取得する
     """
 
     # ボーダーエッジ取得
@@ -534,15 +515,15 @@ def get_digon_edge_pairs(obj):
     for edge in border_edges:
         for connected_edge in [x for x in edge.connectedEdges() if x in border_edges]:
             if len(set(edge.connectedVertices()) & set(connected_edge.connectedVertices())) == 2:
-                if not (connected_edge,edge) in digon_edge_pairs:
+                if not (connected_edge, edge) in digon_edge_pairs:
                     digon_edge_pairs.append((edge, connected_edge))
     
     return digon_edge_pairs
 
 
 def remove_digon_holes(obj):
-    """
-    obj に含まれるすべての二角形ホールを削除する
+    """ obj に含まれるすべての二角形ホールを削除する 
+
     """
 
     # 二角形ホールの取得
@@ -557,7 +538,7 @@ def remove_digon_holes(obj):
         pm.polySubdivideEdge(all_edges)
         edges = pm.ls(selection=True, flatten=True)
         vertices = [x for e in edges for x in e.connectedVertices()]
-        target_vertices= [x for x in vertices if len(x.connectedEdges()) == 2]
+        target_vertices = [x for x in vertices if len(x.connectedEdges()) == 2]
 
         # 追加した頂点をマージし､マージ後の頂点を削除する
         pm.select(clear=True)
@@ -569,7 +550,7 @@ def remove_digon_holes(obj):
 
 
 def select_digon_holes(objects=None):
-    """
+    """ すべての二角形ホールの構成エッジを選択する
     指定オブジェクトのすべての二角形ホールの構成エッジを選択する
     引数無しで選択オブエクトを対象とする
     """
@@ -589,7 +570,7 @@ def select_digon_holes(objects=None):
 
 
 def remove_digon_holes_from_objects(objects=None, display_message=True):
-    """
+    """ すべての二角形ホールを削除する
     指定オブジェクトのすべての二角形ホールを削除する
     引数無しで選択オブエクトを対象とする
     """
@@ -610,9 +591,7 @@ def remove_digon_holes_from_objects(objects=None, display_message=True):
 
 
 def merge_to_last():
-    """
-    最後に選択した頂点にマージ
-    """
+    """ 最後に選択した頂点にマージ """
     # 最終選択頂点座標の取得
     sel = pm.ls(orderedSelection=True, flatten=True)
     point = sel[-1].getPosition()
@@ -624,13 +603,14 @@ def merge_to_last():
 
 
 def merge_in_range(vertices, r, connected=True):
-    """
-    指定した頂点から指定した範囲内にある頂点をマージ
+    """ 指定した頂点から指定した範囲内にある頂点をマージする
     マージ後の頂点座標は引数で指定した頂点の中央
-    vertices:   マージの基準となる頂点リスト。最初に中央へマージされる
-    r:          vertices からマージ対象となる頂点までの最大距離
-    connected:  True:   選択頂点の隣接頂点のみをマージ対象とする
-                False:  選択オブジェクト全体の頂点を対象とする
+
+    Args
+        vertices (list[MeshVertex]): マージの基準となる頂点リスト。最初に中央へマージされる
+        r (float):          vertices からマージ対象となる頂点までの最大距離
+        connected (bool): True: 選択頂点の隣接頂点のみをマージ対象とする
+                          False:  選択オブジェクト全体の頂点を対象とする
     """
     # 指定頂点をセンターへマージ
     base_position = sum([x.getPosition(space="world") for x in vertices]) / len(vertices)
@@ -655,3 +635,63 @@ def merge_in_range(vertices, r, connected=True):
     # 基準頂点の位置へ移動
     vtx.setPosition(base_position, space="world")
 
+
+def shorten_filepath():
+    """ 選択したファイルノードのパスの sourceimages 前を削除する """
+    file_nodes = [x for x in pm.selected() if x.type() == "file"] 
+
+    for file in file_nodes:
+        old = pm.getAttr(file + ".fileTextureName")
+        new = re.sub(r".*sourceimages", "sourceimages", old)
+        pm.setAttr(file + ".fileTextureName", new, type="string")
+
+
+def replace_mesh_as_instance():
+    """ 最後に選択したオブジェクトのインスタンスコピーでそれ以外のオブジェクトを置き換える
+
+    複数のオブジェクトを選択して実行
+    """
+    # 選択オブジェクトの取得
+    selections = [x for x in pm.selected()]
+
+    dst_objects = selections[0:-1]
+    src_object = selections[-1]
+
+    # 複製オブジェクト分だけインスタンスコピーを作成
+    copies = [pm.instance(src_object)[0] for x in range(len(dst_objects))]
+
+    for i, dst in enumerate(dst_objects):
+        # インスタンスコピーを同じ親の子にする
+        parent = dst.getParent()
+
+        if parent:
+            copies[i].setParent(parent)
+        else:
+            copies[i].setParent(top=True)
+        
+        # トランスフォームを一致させる
+        matrix = dst.getMatrix(objectSpace=True)
+        copies[i].setMatrix(matrix, objectSpace=True)
+
+        # リネームして元のオブジェクトを削除する
+        name = dst.name()
+        pm.delete(dst)
+        copies[i].rename(name)
+
+
+def replace_mesh_as_connection():
+    """ 最後に選択したオブジェクトの形状を inmesh-outmesh 接続でそれ以外のオブジェクトにコピーする
+
+    複数のオブジェクトを選択して実行
+    """
+    selections = [x for x in pm.selected()]
+
+    dst_objects = selections[0:-1]
+    src_object = selections[-1]
+
+    print(dst_objects)
+    print(src_object)
+
+    for dst in dst_objects:
+        if not dst in src_object.outMesh.connections(dst.inMesh):
+            src_object.outMesh.connect(dst.inMesh)
