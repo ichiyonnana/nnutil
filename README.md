@@ -1,2 +1,4 @@
 # nnutil
-Operation and coding Utility for Maya
+
+move to
+https://github.com/ichiyonnana/nntools_maya/tree/main/nnutil
